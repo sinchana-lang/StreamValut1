@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VideoStreaming Server</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#060811;--surface:#0e101c;--card:#12151f;--card2:#1a1d2e;--border:rgba(255,255,255,0.07);--accent:#1ce783;--accentD:#13b060;--blue:#00b4d8;--gold:#f5a623;--red:#e63946;--text:#eaeaf5;--muted:#6b6b9a;--r:12px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:var(--card2);border-radius:3px;}
+
+/* AUTH */
+#authPage{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;}
+.auth-bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 90% 70% at 80% 10%,rgba(28,231,131,0.13) 0%,transparent 55%),radial-gradient(ellipse 70% 90% at 10% 90%,rgba(0,180,216,0.11) 0%,transparent 55%),linear-gradient(160deg,#060811 0%,#0a0d1a 100%);}
+.auth-grid{position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(255,255,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.022) 1px,transparent 1px);background-size:48px 48px;}
+.auth-wrap{position:relative;z-index:1;width:100%;max-width:470px;animation:fadeUp .55s cubic-bezier(.16,1,.3,1) both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px);}to{opacity:1;transform:translateY(0);}}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:2px;}
+.auth-logo-sub{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:6px;color:var(--muted);text-align:center;margin-bottom:4px;}
+.auth-tagline{text-align:center;color:var(--muted);font-size:.8rem;margin-bottom:28px;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:38px 36px;box-shadow:0 48px 90px rgba(0,0,0,.55);}
+.tab-row{display:flex;gap:4px;background:rgba(255,255,255,0.04);border-radius:10px;padding:4px;margin-bottom:28px;}
+.tab-btn{flex:1;padding:10px 6px;border:none;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);transition:all .22s;}
+.tab-btn.active{background:var(--accent);color:#000;}
+.form-panel{display:none;}.form-panel.active{display:block;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg{margin-bottom:15px;}
+.fg label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin-bottom:7px;}
+.fg input{width:100%;padding:12px 15px;background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.08);border-radius:9px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.93rem;transition:border-color .2s,box-shadow .2s;outline:none;}
+.fg input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(28,231,131,0.13);}
+.fg input::placeholder{color:rgba(255,255,255,.18);}
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accentD));border:none;border-radius:11px;color:#000;font-family:'DM Sans',sans-serif;font-size:.98rem;font-weight:700;cursor:pointer;margin-top:8px;transition:transform .15s,box-shadow .2s;}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(28,231,131,0.38);}
+.auth-msg{margin-top:14px;padding:11px 15px;border-radius:9px;font-size:.86rem;text-align:center;display:none;}
+.auth-msg.err{background:rgba(230,57,70,0.12);color:var(--red);border:1px solid rgba(230,57,70,0.22);}
+.auth-msg.ok{background:rgba(28,231,131,0.1);color:var(--accent);border:1px solid rgba(28,231,131,0.22);}
+
+/* HOME */
+#homePage{display:none;min-height:100vh;}
+.navbar{position:fixed;top:0;left:0;right:0;z-index:200;height:66px;display:flex;align-items:center;padding:0 36px;background:rgba(6,8,17,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-right:40px;flex-shrink:0;line-height:1.15;}
+.nav-logo span{display:block;font-size:.6rem;letter-spacing:5px;opacity:.65;}
+.nav-links{display:flex;gap:24px;align-items:center;flex:1;}
+.nav-links a{color:var(--muted);font-size:.88rem;font-weight:500;cursor:pointer;transition:color .2s;padding:4px 0;border-bottom:2px solid transparent;text-decoration:none;}
+.nav-links a:hover{color:var(--text);}
+.nav-links a.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.search-box{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:30px;padding:7px 15px;}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.85rem;width:140px;}
+.search-box input::placeholder{color:var(--muted);}
+.user-chip{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:30px;padding:5px 14px 5px 5px;}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--blue));display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;color:#000;flex-shrink:0;}
+.user-name{font-size:.84rem;font-weight:500;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-logout{padding:8px 18px;background:transparent;border:1.5px solid rgba(230,57,70,0.4);border-radius:8px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-logout:hover{background:rgba(230,57,70,0.12);border-color:var(--red);}
+
+/* HERO */
+.hero{padding-top:66px;height:540px;position:relative;overflow:hidden;display:flex;align-items:flex-end;}
+.hero-bg{position:absolute;inset:0;background:linear-gradient(135deg,#060e20 0%,#0a1525 40%,#060811 100%);}
+.hero-overlay{position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 20% 50%,rgba(0,180,216,0.18) 0%,transparent 55%),radial-gradient(ellipse 40% 60% at 80% 30%,rgba(28,231,131,0.12) 0%,transparent 50%),linear-gradient(to top,rgba(6,8,17,1) 0%,transparent 45%);}
+.hero-content{position:relative;z-index:1;padding:0 60px 55px;max-width:640px;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--gold);border-radius:4px;font-size:.68rem;font-weight:800;color:#000;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.6rem,5vw,4.5rem);letter-spacing:2px;line-height:1.0;margin-bottom:10px;}
+.hero-title span{color:var(--accent);}
+.hero-meta{display:flex;gap:14px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.hero-meta em{font-size:.8rem;color:rgba(255,255,255,.5);font-style:normal;}
+.dot{width:3px;height:3px;background:var(--muted);border-radius:50%;display:inline-block;}
+.hero-desc{color:rgba(255,255,255,.55);font-size:.9rem;line-height:1.65;margin-bottom:26px;max-width:460px;}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;}
+.btn-play{display:flex;align-items:center;gap:9px;padding:13px 26px;background:linear-gradient(135deg,var(--accent),var(--accentD));border:none;border-radius:10px;color:#000;font-family:'DM Sans',sans-serif;font-size:.93rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s;}
+.btn-play:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(28,231,131,0.42);}
+.btn-more{display:flex;align-items:center;gap:9px;padding:13px 26px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.14);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.93rem;font-weight:500;cursor:pointer;transition:background .2s;}
+.btn-more:hover{background:rgba(255,255,255,0.15);}
+
+/* CONTENT */
+.content{padding:10px 40px 70px;}
+.section{margin-top:40px;}
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:1.5px;}
+.sec-title em{color:var(--accent);font-style:normal;}
+.sec-more{font-size:.8rem;color:var(--accent);cursor:pointer;opacity:.75;}
+.sec-more:hover{opacity:1;}
+
+/* VIDEO GRID */
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:16px;}
+.vcard{background:var(--card);border-radius:var(--r);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;}
+.vcard:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 20px 50px rgba(0,0,0,.55);border-color:rgba(28,231,131,0.3);}
+.vcard-thumb{width:100%;aspect-ratio:16/10;background:linear-gradient(135deg,var(--card2),#1e2240);position:relative;display:flex;align-items:center;justify-content:center;}
+.vcard-thumb svg{opacity:.2;}
+.play-overlay{position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background .25s;}
+.vcard:hover .play-overlay{background:rgba(0,0,0,0.45);}
+.play-circle{width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.7);transition:opacity .2s,transform .2s;}
+.vcard:hover .play-circle{opacity:1;transform:scale(1);}
+.vcard-badge{position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:4px;font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.badge-hd{background:var(--blue);color:#000;}.badge-new{background:var(--accent);color:#000;}.badge-4k{background:var(--gold);color:#000;}
+.vcard-body{padding:12px 13px 14px;}
+.vcard-title{font-size:.87rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;}
+.vcard-meta{display:flex;gap:8px;align-items:center;font-size:.73rem;color:var(--muted);}
+.vcard-size{margin-left:auto;background:rgba(255,255,255,.05);padding:2px 7px;border-radius:4px;font-size:.68rem;color:var(--muted);}
+.empty-state{grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--muted);}
+.empty-state p{font-size:.92rem;margin-top:12px;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed rgba(255,255,255,0.1);border-radius:var(--r);padding:40px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;}
+.upload-zone:hover{border-color:var(--accent);background:rgba(28,231,131,0.04);}
+.upload-zone p{color:var(--muted);font-size:.88rem;margin-bottom:10px;}
+.upload-zone .sub{font-size:.75rem;color:var(--muted);margin-bottom:16px;}
+.btn-pick{padding:10px 22px;background:linear-gradient(135deg,var(--accent),var(--accentD));border:none;border-radius:9px;color:#000;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;}
+#fileInput{display:none;}
+.upload-progress{margin-top:18px;display:none;}
+.progress-bar-wrap{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--blue));border-radius:3px;width:0%;transition:width .3s;}
+.progress-txt{font-size:.8rem;color:var(--muted);}
+
+/* PROFILE */
+.profile-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px;max-width:520px;margin:0 auto;}
+.profile-avatar-lg{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--blue));display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:700;color:#000;margin:0 auto 18px;}
+.profile-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;text-align:center;margin-bottom:3px;}
+.profile-email{text-align:center;color:var(--muted);font-size:.86rem;margin-bottom:26px;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.profile-field{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.profile-field label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:4px;}
+.profile-field span{font-size:.93rem;font-weight:500;}
+.btn-logout-big{width:100%;margin-top:22px;padding:13px;background:rgba(230,57,70,0.1);border:1.5px solid rgba(230,57,70,0.35);border-radius:10px;color:var(--red);font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-logout-big:hover{background:rgba(230,57,70,0.2);}
+
+/* PLAYER */
+#playerModal{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+#playerModal.open{display:flex;animation:fadeIn .2s ease both;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.player-wrap{width:90vw;max-width:1000px;background:var(--surface);border-radius:18px;overflow:hidden;border:1px solid var(--border);box-shadow:0 50px 120px rgba(0,0,0,.7);animation:scaleIn .25s cubic-bezier(.16,1,.3,1) both;}
+@keyframes scaleIn{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+.player-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);}
+.player-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1.5px;}
+.player-close{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.07);color:var(--text);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+.player-close:hover{background:rgba(230,57,70,0.25);color:var(--red);}
+#videoEl{width:100%;display:block;background:#000;max-height:75vh;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;z-index:999;padding:13px 20px;border-radius:10px;font-size:.86rem;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.5);transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success{background:rgba(28,231,131,0.15);color:var(--accent);border:1px solid rgba(28,231,131,0.3);}
+.toast.error{background:rgba(230,57,70,0.15);color:var(--red);border:1px solid rgba(230,57,70,0.3);}
+
+.page-tab{display:none;}.page-tab.active{display:block;}
+.spinner{width:36px;height:36px;border:3px solid rgba(28,231,131,0.15);border-top-color:var(--accent);border-radius:50%;margin:40px auto;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:768px){
+  .navbar{padding:0 16px;}.nav-links{display:none;}.search-box{display:none;}
+  .hero-content{padding:0 20px 40px;}.content{padding:10px 16px 60px;}
+  .auth-card{padding:28px 20px;}.form-row{grid-template-columns:1fr;}.profile-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH PAGE -->
+<div id="authPage">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-wrap">
+    <div class="auth-logo">VideoStreaming</div>
+    <div class="auth-logo-sub">Server</div>
+    <div class="auth-tagline">Your personal video library — stream anything, anytime</div>
+    <div class="auth-card">
+      <div class="tab-row">
+        <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn"        onclick="switchTab('register')">Register</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginPanel" class="form-panel active">
+        <div class="fg"><label>Email Address</label><input id="lEmail" type="email" placeholder="you@example.com"/></div>
+        <div class="fg"><label>Password</label><input id="lPass" type="password" placeholder="Enter your password"/></div>
+        <button class="btn-main" onclick="doLogin()">Sign In &rarr;</button>
+        <div id="loginMsg" class="auth-msg"></div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="registerPanel" class="form-panel">
+        <div class="form-row">
+          <div class="fg"><label>Full Name</label><input id="rName" type="text" placeholder="Your name"/></div>
+          <div class="fg"><label>Age</label><input id="rAge" type="number" placeholder="25" min="10" max="120"/></div>
+        </div>
+        <div class="fg"><label>Email Address</label><input id="rEmail" type="email" placeholder="you@example.com"/></div>
+        <div class="fg"><label>Phone Number</label><input id="rPhone" type="tel" placeholder="+91 98765 43210"/></div>
+        <div class="fg"><label>Password</label><input id="rPass" type="password" placeholder="Min 4 characters"/></div>
+        <button class="btn-main" onclick="doRegister()">Create Account &rarr;</button>
+        <div id="registerMsg" class="auth-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOME PAGE -->
+<div id="homePage">
+  <nav class="navbar">
+    <div class="nav-logo">VideoStreaming<span>Server</span></div>
+    <div class="nav-links">
+      <a class="active" onclick="showTab('home')">&#127968; Home</a>
+      <a onclick="showTab('movies')">&#127916; Movies</a>
+      <a onclick="showTab('upload')">&#128228; Upload</a>
+      <a onclick="showTab('profile')">&#128100; My Account</a>
+    </div>
+    <div class="nav-right">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="searchInput" type="text" placeholder="Search videos..." oninput="filterVideos()"/>
+      </div>
+      <div class="user-chip">
+        <div class="user-avatar" id="navAvatar">U</div>
+        <span class="user-name" id="navName">User</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">&#9211; Logout</button>
+    </div>
+  </nav>
+
+  <!-- HOME TAB -->
+  <div id="tabHome" class="page-tab active">
+    <div class="hero">
+      <div class="hero-bg"></div><div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge">&#9889; Now Streaming</div>
+        <div class="hero-title">VideoStreaming <span>Server</span></div>
+        <div class="hero-meta">
+          <em>&#127916; Personal Library</em><span class="dot"></span>
+          <em>HD Quality</em><span class="dot"></span>
+          <em>All Formats</em>
+        </div>
+        <div class="hero-desc">Welcome to your personal VideoStreaming Server. Watch, upload and manage your full video collection. Supports MP4, MKV, WebM, AVI, MOV and more.</div>
+        <div class="hero-btns">
+          <button class="btn-play" onclick="playFirstVideo()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>Play Now
+          </button>
+          <button class="btn-more" onclick="showTab('movies')">Browse All</button>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="section">
+        <div class="sec-head">
+          <div class="sec-title">Your <em>Library</em></div>
+          <span class="sec-more" onclick="showTab('movies')">See All &rarr;</span>
+        </div>
+        <div class="video-grid" id="homeGrid"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVIES TAB -->
+  <div id="tabMovies" class="page-tab">
+    <div style="height:66px"></div>
+    <div class="content">
+      <div class="section">
+        <div class="sec-head"><div class="sec-title">All <em>Videos</em></div></div>
+        <div class="video-grid" id="moviesGrid"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD TAB -->
+  <div id="tabUpload" class="page-tab">
+    <div style="height:66px"></div>
+    <div class="content">
+      <div class="section">
+        <div class="sec-head"><div class="sec-title">Upload <em>Video</em></div></div>
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.3" style="margin-bottom:14px"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <p>Click here or drop your video file to upload</p>
+          <p class="sub">MP4, MKV, WebM, AVI, MOV, M4V &mdash; Max 4 GB</p>
+          <button class="btn-pick">Choose File</button>
+        </div>
+        <input type="file" id="fileInput" accept=".mp4,.mkv,.webm,.avi,.mov,.m4v" onchange="uploadFile(this)"/>
+        <div class="upload-progress" id="uploadProgress">
+          <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+          <div class="progress-txt" id="progressTxt">Uploading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div id="tabProfile" class="page-tab">
+    <div style="height:66px"></div>
+    <div class="content">
+      <div class="section">
+        <div class="sec-head"><div class="sec-title">My <em>Account</em></div></div>
+        <div class="profile-card">
+          <div class="profile-avatar-lg" id="profileAvatar">U</div>
+          <div class="profile-name"  id="profileName">-</div>
+          <div class="profile-email" id="profileEmail">-</div>
+          <div class="profile-grid">
+            <div class="profile-field"><label>Phone</label><span id="profilePhone">-</span></div>
+            <div class="profile-field"><label>Age</label><span id="profileAge">-</span></div>
+            <div class="profile-field"><label>Member Since</label><span id="profileJoined">-</span></div>
+            <div class="profile-field"><label>Status</label><span style="color:var(--accent)">&#9679; Active</span></div>
+          </div>
+          <button class="btn-logout-big" onclick="logout()">&#9211; Sign Out of VideoStreaming Server</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLAYER MODAL -->
+<div id="playerModal">
+  <div class="player-wrap">
+    <div class="player-header">
+      <div class="player-title" id="playerTitle">Now Playing</div>
+      <button class="player-close" onclick="closePlayer()">&#10005;</button>
+    </div>
+    <video id="videoEl" controls autoplay playsinline>Your browser does not support HTML5 video.</video>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var currentUser=null,allVideos=[];
+
+window.addEventListener('DOMContentLoaded',function(){
+  var s=localStorage.getItem('vss_user');
+  if(s){try{currentUser=JSON.parse(s);showHome();}catch(e){localStorage.removeItem('vss_user');}}
+});
+
+function switchTab(t){
+  document.querySelectorAll('.tab-btn').forEach(function(b,i){b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register'));});
+  document.getElementById('loginPanel').classList.toggle('active',t==='login');
+  document.getElementById('registerPanel').classList.toggle('active',t==='register');
+  ['loginMsg','registerMsg'].forEach(function(id){var e=document.getElementById(id);e.style.display='none';e.textContent='';});
+}
+
+async function doRegister(){
+  var name=document.getElementById('rName').value.trim(),age=document.getElementById('rAge').value.trim(),
+      email=document.getElementById('rEmail').value.trim(),phone=document.getElementById('rPhone').value.trim(),
+      pass=document.getElementById('rPass').value;
+  if(!name||!email||!pass)return showMsg('registerMsg','Please fill in Name, Email and Password.','err');
+  try{
+    var r=await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,phone:phone,age:age,password:pass})});
+    var d=await r.json();
+    if(d.error)showMsg('registerMsg',d.error,'err');
+    else{showMsg('registerMsg','Account created! Signing you in...','ok');setTimeout(function(){loginSuccess(d);},900);}
+  }catch(e){showMsg('registerMsg','Server error. Is the server running?','err');}
+}
+
+async function doLogin(){
+  var email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;
+  if(!email||!pass)return showMsg('loginMsg','Please enter email and password.','err');
+  try{
+    var r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})});
+    var d=await r.json();
+    if(d.error)showMsg('loginMsg',d.error,'err');
+    else loginSuccess(d);
+  }catch(e){showMsg('loginMsg','Server error. Is the server running?','err');}
+}
+
+function loginSuccess(u){
+  currentUser=u;localStorage.setItem('vss_user',JSON.stringify(u));showHome();
+}
+
+function logout(){
+  currentUser=null;localStorage.removeItem('vss_user');allVideos=[];
+  document.getElementById('homePage').style.display='none';
+  document.getElementById('authPage').style.display='flex';
+  document.getElementById('lEmail').value='';document.getElementById('lPass').value='';
+  switchTab('login');
+}
+
+function showHome(){
+  document.getElementById('authPage').style.display='none';
+  document.getElementById('homePage').style.display='block';
+  var init=(currentUser.name||'U')[0].toUpperCase();
+  document.getElementById('navAvatar').textContent=init;
+  document.getElementById('navName').textContent=currentUser.name||'User';
+  document.getElementById('profileAvatar').textContent=init;
+  document.getElementById('profileName').textContent=currentUser.name||'-';
+  document.getElementById('profileEmail').textContent=currentUser.email||'-';
+  document.getElementById('profilePhone').textContent=currentUser.phone||'-';
+  document.getElementById('profileAge').textContent=currentUser.age||'-';
+  document.getElementById('profileJoined').textContent=new Date().toLocaleDateString('en-IN',{year:'numeric',month:'short'});
+  loadVideos();
+}
+
+function showTab(tab){
+  document.querySelectorAll('.nav-links a').forEach(function(el,i){
+    el.classList.toggle('active',['home','movies','upload','profile'][i]===tab);
+  });
+  document.querySelectorAll('.page-tab').forEach(function(el){el.classList.remove('active');});
+  var map={home:'tabHome',movies:'tabMovies',upload:'tabUpload',profile:'tabProfile'};
+  document.getElementById(map[tab]).classList.add('active');
+}
+
+async function loadVideos(){
+  try{
+    var r=await fetch('/api/videos');allVideos=await r.json();renderGrids(allVideos);
+  }catch(e){
+    var m=emptyState('Cannot reach server. Make sure VideoStreaming Server is running.');
+    document.getElementById('homeGrid').innerHTML=m;document.getElementById('moviesGrid').innerHTML=m;
+  }
+}
+
+function renderGrids(videos){
+  var badges=['badge-hd','badge-new','badge-4k'],bLabels=['HD','NEW','4K'];
+  function card(v,i){
+    return '<div class="vcard" onclick="playVideo(\''+esc(v.id)+'\',\''+esc(v.name)+'\')">'+
+      '<div class="vcard-thumb">'+
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10,8 16,12 10,16" fill="var(--accent)" stroke="none"/></svg>'+
+      '<div class="play-overlay"><div class="play-circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="#000"><polygon points="5,3 19,12 5,21"/></svg></div></div>'+
+      '<div class="vcard-badge '+badges[i%3]+'">'+bLabels[i%3]+'</div>'+
+      '</div><div class="vcard-body">'+
+      '<div class="vcard-title">'+escH(v.name)+'</div>'+
+      '<div class="vcard-meta"><span>Video</span><span class="vcard-size">'+v.size+'</span></div>'+
+      '</div></div>';
+  }
+  var html=videos.length?videos.map(function(v,i){return card(v,i);}).join(''):emptyState('No videos found. Go to Upload tab to add your videos!');
+  document.getElementById('homeGrid').innerHTML=html;
+  document.getElementById('moviesGrid').innerHTML=html;
+}
+
+function emptyState(msg){
+  return '<div class="empty-state"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="20" height="20" rx="3"/><polygon points="10,8 16,12 10,16"/></svg><p>'+msg+'</p></div>';
+}
+
+function filterVideos(){
+  var q=document.getElementById('searchInput').value.toLowerCase();
+  renderGrids(allVideos.filter(function(v){return v.name.toLowerCase().indexOf(q)>=0;}));
+}
+
+function playFirstVideo(){
+  if(allVideos.length>0)playVideo(allVideos[0].id,allVideos[0].name);else showTab('upload');
+}
+
+function playVideo(id,name){
+  document.getElementById('playerTitle').textContent=name;
+  document.getElementById('videoEl').src='/stream/'+encodeURIComponent(id);
+  document.getElementById('playerModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closePlayer(){
+  var v=document.getElementById('videoEl');v.pause();v.src='';
+  document.getElementById('playerModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+document.getElementById('playerModal').addEventListener('click',function(e){if(e.target===this)closePlayer();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePlayer();});
+
+function uploadFile(input){
+  var file=input.files[0];if(!file)return;
+  var prog=document.getElementById('uploadProgress'),bar=document.getElementById('progressBar'),txt=document.getElementById('progressTxt');
+  prog.style.display='block';bar.style.width='0%';txt.textContent='Uploading '+file.name+'...';
+  var fd=new FormData();fd.append('file',file);
+  var xhr=new XMLHttpRequest();xhr.open('POST','/upload');
+  xhr.upload.onprogress=function(e){
+    if(e.lengthComputable){var p=Math.round(e.loaded/e.total*100);bar.style.width=p+'%';txt.textContent='Uploading... '+p+'% ('+hSize(e.loaded)+' / '+hSize(e.total)+')';}
+  };
+  xhr.onload=function(){
+    try{var d=JSON.parse(xhr.responseText);
+      if(d.success){bar.style.width='100%';txt.textContent='Upload complete: '+d.name;showToast('Uploaded: '+d.name,'success');loadVideos();setTimeout(function(){prog.style.display='none';input.value='';},3000);}
+      else{txt.textContent='Error: '+(d.error||'Upload failed');showToast(d.error||'Upload failed','error');}
+    }catch(e){txt.textContent='Server error';}
+  };
+  xhr.onerror=function(){txt.textContent='Network error';showToast('Network error','error');};
+  xhr.send(fd);
+}
+
+function showMsg(id,msg,type){var e=document.getElementById(id);e.textContent=msg;e.className='auth-msg '+type;e.style.display='block';}
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'success');t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3500);}
+function hSize(b){if(b<1024)return b+' B';var k=b/1024;if(k<1024)return k.toFixed(0)+' KB';var m=k/1024;if(m<1024)return m.toFixed(1)+' MB';return (m/1024).toFixed(2)+' GB';}
+function esc(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.getElementById('authPage').style.display!=='none'){
+    if(document.getElementById('loginPanel').classList.contains('active'))doLogin();else doRegister();
+  }
+});
+</script>
+</body>
+</html>
